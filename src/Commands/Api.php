@@ -2,15 +2,17 @@
 
 namespace Polylang_CLI\Commands;
 
-if ( ! class_exists( 'Polylang_CLI\Commands\ApiCommand' ) ) {
+if (class_exists('Polylang_CLI\Commands\ApiCommand')) {
+    return;
+}
 
 /**
  * Inspect Polylang procedural API functions.
  *
  * @package Polylang_CLI
  */
-class ApiCommand extends BaseCommand {
-
+class ApiCommand extends BaseCommand
+{
     /**
      * List Polylang procedural API functions.
      *
@@ -26,11 +28,11 @@ class ApiCommand extends BaseCommand {
      *
      * @subcommand list
      */
-    public function list_( $args, $assoc_args )
+    public function list_($args, $assoc_args)
     {
         $api_functions = array();
 
-        foreach ( $this->api->functions() as $index => $func ) {
+        foreach ($this->api->functions() as $index => $func) {
 
             $obj = new \stdClass();
 
@@ -40,11 +42,8 @@ class ApiCommand extends BaseCommand {
             $api_functions[] = $obj;
         }
 
-        $formatter = $this->cli->formatter( $assoc_args, array( 'function' ) );
+        $formatter = $this->cli->formatter($assoc_args, array('function'));
 
-        $formatter->display_items( $api_functions );
+        $formatter->display_items($api_functions);
     }
-
-}
-
 }

@@ -2,14 +2,17 @@
 
 namespace Polylang_CLI\Commands;
 
-if ( ! class_exists( 'Polylang_CLI\Commands\PostCommand' ) ) {
+if (class_exists('Polylang_CLI\Commands\PostCommand')) {
+    return;
+}
 
 /**
  * Manage posts and their translations.
  *
  * @package Polylang_CLI
  */
-class PostCommand extends BaseCommand {
+class PostCommand extends BaseCommand
+{
 
     /**
      * List a post and its translations, or get a post for a language.
@@ -30,40 +33,41 @@ class PostCommand extends BaseCommand {
      *     wp pll post get 12
      *     wp pll post get 1 es --api
      */
-    public function get( $args, $assoc_args ) {
+    public function get($args, $assoc_args)
+    {
 
-        list( $post_id ) = $args;
+        list($post_id) = $args;
 
-        if ( ! $post = get_post( $post_id ) ) {
-            $this->cli->error( sprintf( '%d is not a valid post object', $post_id ) );
+        if (!$post = get_post($post_id)) {
+            $this->cli->error(sprintf('%d is not a valid post object', $post_id));
         }
 
-        if ( ! $this->api->is_translated_post_type( $post->post_type ) ) {
-            $this->cli->error( 'Polylang does not manage languages and translations for this post type.' );
+        if (!$this->api->is_translated_post_type($post->post_type)) {
+            $this->cli->error('Polylang does not manage languages and translations for this post type.');
         }
 
-        if ( $this->cli->flag( $assoc_args, 'api' ) ) {
+        if ($this->cli->flag($assoc_args, 'api')) {
 
             # second param of pll_get_post() is empty string by default
-            $slug = isset( $args[1] ) && $args[1] ? $args[1] : $this->api->default_language();
+            $slug = isset($args[1]) && $args[1] ? $args[1] : $this->api->default_language();
 
-            if ( empty( $translation = $this->api->get_post( $args[0], $slug ) ) ) {
+            if (empty($translation = $this->api->get_post($args[0], $slug))) {
 
-                $this->cli->error( sprintf( "Post %d has not yet been translated to %s.", $post_id, $slug ) );
+                $this->cli->error(sprintf("Post %d has not yet been translated to %s.", $post_id, $slug));
 
             } else {
 
                 $this->cli->runcommand(
-                    sprintf( 'post get %d', $translation ),
-                    array( 'return' => false, 'launch' => false, 'exit_error' => false )
+                    sprintf('post get %d', $translation),
+                    array('return' => false, 'launch' => false, 'exit_error' => false)
                 );
             }
 
         } else {
 
             $this->cli->runcommand(
-                sprintf( 'post list --post__in=%s', implode( ',', $this->api->get_post_translations( $post_id ) ) ),
-                array( 'return' => false, 'launch' => false, 'exit_error' => false )
+                sprintf('post list --post__in=%s', implode(',', $this->api->get_post_translations($post_id))),
+                array('return' => false, 'launch' => false, 'exit_error' => false)
             );
         }
     }
@@ -77,7 +81,8 @@ class PostCommand extends BaseCommand {
      * : The type of the new posts. Required.
      *
      * [--<field>=<value>]
-     * : Associative args for the new posts. See wp_insert_post(). These values will take precendence over input from STDIN.
+     * : Associative args for the new posts. See wp_insert_post().
+     * : These values will take precendence over input from STDIN.
      *
      * [--stdin]
      * : Read structured JSON from STDIN.
@@ -92,15 +97,15 @@ class PostCommand extends BaseCommand {
      *     Success: Created and linked 2 posts of the page post type.
      *
      *     # Create a post and its translations using structured JSON
-     *     $ echo '{"nl":{"post_title":"Dutch title","post_content":"Dutch content"},"de":{"post_title":"German title","post_content":"German content"}}' | wp pll post create --post_type=post --stdin
      *     Success: Created and linked 2 posts of the post post type.
      */
-    public function create( $args, $assoc_args ) {
+    public function create($args, $assoc_args)
+    {
 
-        $post_type = $this->cli->flag( $assoc_args, 'post_type' );
+        $post_type = $this->cli->flag($assoc_args, 'post_type');
 
-        if ( ! $this->api->is_translated_post_type( $post_type ) ) {
-            $this->cli->error( 'Polylang does not manage languages and translations for this post type.' );
+        if (!$this->api->is_translated_post_type($post_type)) {
+            $this->cli->error('Polylang does not manage languages and translations for this post type.');
         }
 
         $languages = $this->api->languages_list();
@@ -108,57 +113,63 @@ class PostCommand extends BaseCommand {
         $data = $post_ids = array();
 
         # handle input from STDIN
-        if ( $this->cli->flag( $assoc_args, 'stdin' ) ) {
+        if ($this->cli->flag($assoc_args, 'stdin')) {
 
-            $stdin = file_get_contents( 'php://stdin' );
-            $data  = json_decode( $stdin, true );
+            $stdin = file_get_contents('php://stdin');
+            $data = json_decode($stdin, true);
 
-            if ( empty( $data ) ) {
-                $this->cli->error( 'Invalid JSON.' );
+            if (empty($data)) {
+                $this->cli->error('Invalid JSON.');
             }
 
             # check if we have content for all languages
-            $diff = array_diff( $languages, array_keys( $data ) );
+            $diff = array_diff($languages, array_keys($data));
 
-            if ( ! empty( $diff ) ) {
-                $this->cli->error( sprintf( 'Please provide input for all languages: %s', implode( ', ', $languages ) ) );
+            if (!empty($diff)) {
+                $this->cli->error(sprintf('Please provide input for all languages: %s', implode(', ', $languages)));
             }
         }
 
         # input from $assoc_args
-        if ( empty( $data ) ) {
-            foreach ( $languages as $slug ) {
+        if (empty($data)) {
+            foreach ($languages as $slug) {
                 $data[$slug] = array();
             }
         }
 
-        foreach ( $data as $slug => $_assoc_args ) {
+        foreach ($data as $slug => $_assoc_args) {
 
-            if ( ! in_array( $slug, $languages ) ) {
-                $this->cli->warning( sprintf( '%s is not a valid language.', $slug ) );
+            if (!in_array($slug, $languages)) {
+                $this->cli->warning(sprintf('%s is not a valid language.', $slug));
                 continue;
             }
 
             # prioritize input from $assoc_args
-            $_assoc_args = array_merge( $assoc_args, $_assoc_args );
+            $_assoc_args = array_merge($assoc_args, $_assoc_args);
             $_assoc_args['porcelain'] = true;
 
             ob_start();
 
-            $this->cli->command( array( 'post', 'create' ), $_assoc_args );
+            $this->cli->command(array('post', 'create'), $_assoc_args);
 
             $post_id = $post_ids[$slug] = ob_get_clean();
 
-            $this->api->set_post_language( $post_id, $slug );
+            $this->api->set_post_language($post_id, $slug);
         }
 
-        $this->api->save_post_translations( $post_ids );
+        $this->api->save_post_translations($post_ids);
 
-        if ( ! $this->cli->flag( $assoc_args, 'porcelain' ) ) {
-            $this->cli->success( sprintf( "Created and linked %d posts of the %s post type.", count( $post_ids ), $post_type ) );
+        if (!$this->cli->flag($assoc_args, 'porcelain')) {
+            $this->cli->success(
+                sprintf(
+                    "Created and linked %d posts of the %s post type.",
+                    count($post_ids),
+                    $post_type
+                )
+            );
         }
 
-        echo implode( ' ', array_map( 'absint', $post_ids ) );
+        echo implode(' ', array_map('absint', $post_ids));
     }
 
     /**
@@ -187,23 +198,37 @@ class PostCommand extends BaseCommand {
      *     $ wp pll post update 13 --comment_status=closed
      *     Success: Updated post 13.
      */
-    public function update( $args, $assoc_args ) {
+    public function update($args, $assoc_args)
+    {
 
-        $this->pll->filters_post = new \PLL_Admin_Filters_Post( $this->pll );
-        $this->pll->sync         = new \PLL_Admin_Sync( $this->pll );
+        $this->pll->filters_post = new \PLL_Admin_Filters_Post($this->pll);
+        $this->pll->sync = new \PLL_Admin_Sync($this->pll);
 
         $GLOBALS['pagenow'] = 'post.php';
 
         # get around Polylang's capability check
         $current_user = wp_get_current_user();
-        $current_user->allcaps = get_role( 'administrator' )->capabilities;
+        $current_user->allcaps = get_role('administrator')->capabilities;
 
-        $_args       = implode( ' ', array_merge( array( 'post', 'update' ), $args ) );
-        $_assoc_args = empty( $assoc_args ) ? '' : implode( ' ', array_map( function ( $v, $k ) { return "--{$k}='{$v}'"; }, $assoc_args, array_keys( $assoc_args ) ) );
+        $_args = implode(' ', array_merge(array('post', 'update'), $args));
+        $_assoc_args = '';
+
+        if (!empty($assoc_args)) {
+            $_assoc_args = implode(
+                ' ',
+                array_map(
+                    function ($v, $k) {
+                        return "--{$k}='{$v}'";
+                    },
+                    $assoc_args,
+                    array_keys($assoc_args)
+                )
+            );
+        }
 
         $this->cli->runcommand(
-            sprintf( '%s %s', $_args, $_assoc_args ),
-            array( 'return' => false, 'launch' => false, 'exit_error' => false )
+            sprintf('%s %s', $_args, $_assoc_args),
+            array('return' => false, 'launch' => false, 'exit_error' => false)
         );
     }
 
@@ -225,27 +250,28 @@ class PostCommand extends BaseCommand {
      *
      *     wp pll post delete 32
      */
-    public function delete( $args, $assoc_args ) {
+    public function delete($args, $assoc_args)
+    {
+        list($post_id) = $args;
 
-        list( $post_id ) = $args;
-
-        if ( ! $post = get_post( $post_id ) ) {
-            $this->cli->error( sprintf( '%d is not a valid post object', $post_id ) );
+        if (!$post = get_post($post_id)) {
+            $this->cli->error(sprintf('%d is not a valid post object', $post_id));
         }
 
-        if ( ! $this->api->is_translated_post_type( $post->post_type ) ) {
-            $this->cli->error( 'Polylang does not manage languages and translations for this post type.' );
+        if (!$this->api->is_translated_post_type($post->post_type)) {
+            $this->cli->error('Polylang does not manage languages and translations for this post type.');
         }
 
-        $post_ids = $this->api->get_post_translations( $post_id );
+        $post_ids = $this->api->get_post_translations($post_id);
 
-        $this->cli->command( array( 'post', 'delete', implode( ' ', $post_ids ) ), $assoc_args );
+        $this->cli->command(array('post', 'delete', implode(' ', $post_ids)), $assoc_args);
     }
 
     /**
      * Duplicate a post to one or more languages.
      *
-     * Syncs metadata and taxonomy terms, based on Polylang settings. Run `wp pll option list` to inspect current settings.
+     * Syncs metadata and taxonomy terms, based on Polylang settings.
+     * Run `wp pll option list` to inspect current settings.
      *
      * ## OPTIONS
      *
@@ -253,7 +279,8 @@ class PostCommand extends BaseCommand {
      * : Post ID of the post to duplicate. Required.
      *
      * [<language-code>]
-     * : Language code (slug), or comma-separated list of language codes, to duplicate the post to. Omit to duplicate to all languages. Optional.
+     * : Language code (slug), or comma-separated list of language codes, to duplicate the post to.
+     * :Omit to duplicate to all languages. Optional.
      *
      * ## EXAMPLES
      *
@@ -266,114 +293,122 @@ class PostCommand extends BaseCommand {
      *     Success: Updated post 68 (de) < post 23 (nl)
      *     Success: Created post 69 (es) < post 23 (nl)
      */
-    public function duplicate( $args, $assoc_args ) {
+    public function duplicate($args, $assoc_args)
+    {
+        list($post_id) = $args;
 
-        list( $post_id ) = $args;
-
-        if ( ! $post = get_post( $post_id, ARRAY_A ) ) {
-            $this->cli->error( sprintf( '%d is not a valid post object', $post_id ) );
+        if (!$post = get_post($post_id, ARRAY_A)) {
+            $this->cli->error(sprintf('%d is not a valid post object', $post_id));
         }
 
-        if ( ! $this->api->is_translated_post_type( $post['post_type'] ) ) {
-            $this->cli->error( 'Polylang does not manage languages and translations for this post type.' );
+        if (!$this->api->is_translated_post_type($post['post_type'])) {
+            $this->cli->error('Polylang does not manage languages and translations for this post type.');
         }
 
-        $slugs = isset( $args[1] ) && $args[1]
-            ? array_map( 'sanitize_title_with_dashes', explode( ',', $args[1] ) )
-            : array_diff( $this->api->languages_list(), array( pll_get_post_language( $post_id ) ) );
+        $slugs = isset($args[1]) && $args[1]
+        ? array_map('sanitize_title_with_dashes', explode(',', $args[1]))
+        : array_diff($this->api->languages_list(), array(pll_get_post_language($post_id)));
 
-        foreach ( $slugs as $slug ) {
+        foreach ($slugs as $slug) {
 
-            if ( ! in_array( $slug, $this->api->languages_list() ) ) {
+            if (!in_array($slug, $this->api->languages_list())) {
 
-                $this->cli->warning( sprintf( '%s is not a valid language.', $slug ) );
+                $this->cli->warning(sprintf('%s is not a valid language.', $slug));
                 continue;
             }
 
-            $this->duplicate_post( $post, $slug );
+            $this->duplicate_post($post, $slug);
         }
     }
 
-    private function duplicate_post( $post, $slug )
+    private function duplicate_post($post, $slug)
     {
-        $post_id           = absint( $post['ID'] );
-        $post_language     = pll_get_post_language( $post_id );
-        $post_translations = $this->api->get_post_translations( $post_id );
+        $post_id = absint($post['ID']);
+        $post_language = pll_get_post_language($post_id);
+        $post_translations = $this->api->get_post_translations($post_id);
 
         $post_data = $post;
 
-        if ( $slug === $post_language ) {
-
-            $this->cli->warning( sprintf( 'Post %d (%s) cannot be duplicated to itself.', $post_id, $slug ) );
-
+        if ($slug === $post_language) {
+            $this->cli->warning(sprintf('Post %d (%s) cannot be duplicated to itself.', $post_id, $slug));
         } else {
-
             # check for translated post parent
-            if ( ( $post_parent_id = wp_get_post_parent_id( $post_id ) ) && ( $parent = $this->pll->model->post->get_translation( $post_parent_id, $slug ) ) ) {
-                $post_data['post_parent'] = absint( $parent );
+            if (($post_parent_id = wp_get_post_parent_id($post_id)) && ($parent = $this->pll->model->post->get_translation($post_parent_id, $slug))) {
+                $post_data['post_parent'] = absint($parent);
             }
 
             # check if translation already exists
-            $exists = $this->api->get_post( $post_id, $slug );
+            $exists = $this->api->get_post($post_id, $slug);
 
             # insert or update translation
-            if ( ! empty( $exists ) ) {
-
-                $post_data['ID'] = absint( $exists );
-                $duplicate = wp_update_post( wp_slash( $post_data ), true );
-
+            if (!empty($exists)) {
+                $post_data['ID'] = absint($exists);
+                $duplicate = wp_update_post(wp_slash($post_data), true);
             } else {
+                unset($post_data['ID']);
 
-                unset( $post_data['ID'] );
+                if (class_exists('\WC_Admin_Duplicate_Product') && 'product' === $post_data['post_type']) {
+                    $this->cli->log(sprintf('Duplicating WooCommerce product %d.', $post_id));
 
-                if ( class_exists( '\WC_Admin_Duplicate_Product' ) && 'product' === $post_data['post_type'] ) {
-
-                    $this->cli->log( sprintf( 'Duplicating WooCommerce product %d.', $post_id ) );
-
-                    $product    = wc_get_product( $post_id );
+                    $product = wc_get_product($post_id);
                     $duplicator = new \WC_Admin_Duplicate_Product();
-                    $duplicate = $duplicator->product_duplicate( $product );
+                    $duplicate = $duplicator->product_duplicate($product);
 
-                    $this->cli->log( sprintf( 'Duplicated WooCommerce product ID: %d.', $duplicate->get_id() ) );
+                    $this->cli->log(sprintf('Duplicated WooCommerce product ID: %d.', $duplicate->get_id()));
 
-                    $this->cli->log( 'Updating product data...' );
+                    $this->cli->log('Updating product data...');
 
-                    $duplicate = wp_update_post( wp_slash( array(
-                        'ID'          => $duplicate->get_id(),
-                        'post_title'  => $post_data['post_title'],
-                        'post_status' => $post_data['post_status'],
-                        'post_name'   => sprintf( '%s-%s', $post_data['post_name'], $slug )
-                    ) ), true );
-
+                    $duplicate = wp_update_post(
+                        wp_slash(
+                            array(
+                                'ID' => $duplicate->get_id(),
+                                'post_title' => $post_data['post_title'],
+                                'post_status' => $post_data['post_status'],
+                                'post_name' => sprintf('%s-%s', $post_data['post_name'], $slug),
+                            )
+                        ),
+                        true
+                    );
                 } else {
 
-                    $duplicate = wp_insert_post( wp_slash( $post_data ), true );
+                    $duplicate = wp_insert_post(wp_slash($post_data), true);
 
                 }
             }
 
-            if ( empty( $duplicate ) ) {
-                $this->cli->warning( sprintf( 'Could not duplicate post %d to %s.', $post_id, $slug ) );
-            } elseif ( is_wp_error( $duplicate ) ) {
-                $this->cli->warning( $duplicate->get_error_message() );
+            if (empty($duplicate)) {
+                $this->cli->warning(sprintf('Could not duplicate post %d to %s.', $post_id, $slug));
+            } elseif (is_wp_error($duplicate)) {
+                $this->cli->warning($duplicate->get_error_message());
             } else {
 
                 # set post language
-                $this->api->set_post_language( $duplicate, $slug );
+                $this->api->set_post_language($duplicate, $slug);
 
                 # save post translations
-                $this->api->save_post_translations( array_unique( array_merge( array( $post_language => $post_id, $slug => $duplicate ), $post_translations ) ) );
+                $this->api->save_post_translations(
+                    array_unique(
+                        array_merge(
+                            array($post_language => $post_id, $slug => $duplicate),
+                            $post_translations
+                        )
+                    )
+                );
 
                 # sync taxonomies and post meta, if applicable
-                $this->pll->filters_post = new \PLL_Admin_Filters_Post( $this->pll );
-                $sync = new \PLL_Admin_Sync( $this->pll );
-                $sync->pll_save_post( $post_id, get_post( $post_id, 'OBJECT' ), $this->api->get_post_translations( $post_id ) );
+                $this->pll->filters_post = new \PLL_Admin_Filters_Post($this->pll);
+                $sync = new \PLL_Admin_Sync($this->pll);
+                $sync->pll_save_post(
+                    $post_id,
+                    get_post($post_id, 'OBJECT'),
+                    $this->api->get_post_translations($post_id)
+                );
 
                 # success message
                 $msg = $exists
-                    ? 'Updated post %3$d (%4$s) < post %1$d (%2$s)'
-                    : 'Created post %3$d (%4$s) < post %1$d (%2$s)';
-                $this->cli->success( sprintf( $msg, $post_id, $post_language, $duplicate, $slug ) );
+                ? 'Updated post %3$d (%4$s) < post %1$d (%2$s)'
+                : 'Created post %3$d (%4$s) < post %1$d (%2$s)';
+                $this->cli->success(sprintf($msg, $post_id, $post_language, $duplicate, $slug));
             }
         }
     }
@@ -394,11 +429,12 @@ class PostCommand extends BaseCommand {
      *     wp pll post count nl
      *     wp pll post count es --post_type=page
      */
-    public function count( $args, $assoc_args ) {
+    public function count($args, $assoc_args)
+    {
 
-        $language = $this->pll->model->get_language( $args[0] );
+        $language = $this->pll->model->get_language($args[0]);
 
-        $this->cli->success( sprintf( 'Post count: %d', $this->api->count_posts( $language, $assoc_args ) ) );
+        $this->cli->success(sprintf('Post count: %d', $this->api->count_posts($language, $assoc_args)));
     }
 
     /**
@@ -480,7 +516,6 @@ class PostCommand extends BaseCommand {
      *
      *     # List posts in JSON
      *     $ wp pll post list en-gb --post_type=post --posts_per_page=5 --format=json
-     *     [{"ID":1,"post_title":"Hello world!","post_name":"hello-world","post_date":"2015-06-20 09:00:10","post_status":"publish"},{"ID":1178,"post_title":"Markup: HTML Tags and Formatting","post_name":"markup-html-tags-and-formatting","post_date":"2013-01-11 20:22:19","post_status":"draft"}]
      *
      *     # List all pages
      *     $ wp pll post list nl --post_type=page --fields=post_title,post_status
@@ -504,11 +539,11 @@ class PostCommand extends BaseCommand {
      *
      * @subcommand list
      */
-    public function list_( $args, $assoc_args ) {
-
+    public function list_($args, $assoc_args)
+    {
         $assoc_args['lang'] = $args[0];
 
-        $this->cli->command( array( 'post', 'list' ), $assoc_args );
+        $this->cli->command(array('post', 'list'), $assoc_args);
     }
 
     /**
@@ -582,46 +617,40 @@ class PostCommand extends BaseCommand {
      *     Success: Added custom field.
      *     Success: Added custom field.
      */
-    public function generate( $args, $assoc_args ) {
-
+    public function generate($args, $assoc_args)
+    {
         $languages = $this->api->languages_list();
-        $default_language = $this->api->default_language();
 
-        if ( ! $this->api->is_translated_post_type( $this->cli->flag( $assoc_args, 'post_type' ) ) ) {
-
-            $this->cli->error( 'Polylang does not manage languages and translations for this post type.' );
+        if (!$this->api->is_translated_post_type($this->cli->flag($assoc_args, 'post_type'))) {
+            $this->cli->error('Polylang does not manage languages and translations for this post type.');
         }
 
-        $assoc_args['count'] = isset( $assoc_args['count'] ) ? intval( $assoc_args['count'] ) : 3;
-        $assoc_args['count'] = count( $languages ) * $assoc_args['count'];
+        $assoc_args['count'] = isset($assoc_args['count']) ? intval($assoc_args['count']) : 3;
+        $assoc_args['count'] = count($languages) * $assoc_args['count'];
 
         ob_start();
 
-        $this->cli->command( array( 'post', 'generate' ), $assoc_args );
+        $this->cli->command(array('post', 'generate'), $assoc_args);
 
         $post_ids = ob_get_clean();
 
-        $ids = array_chunk( explode( ' ', $post_ids ), count( $languages ) );
+        $ids = array_chunk(explode(' ', $post_ids), count($languages));
 
-        foreach ( $ids as $i => $chunk ) {
+        foreach ($ids as $i => $chunk) {
+            $ids[$i] = array_combine($languages, $chunk);
 
-            $ids[$i] = array_combine( $languages, $chunk );
+            foreach ($ids[$i] as $lang => $post_id) {
 
-            foreach ( $ids[$i] as $lang => $post_id ) {
-
-                $this->api->set_post_language( $post_id, $lang );
+                $this->api->set_post_language($post_id, $lang);
             }
 
-            $this->api->save_post_translations( $ids[$i] );
+            $this->api->save_post_translations($ids[$i]);
         }
 
-        if ( 'ids' === $this->cli->flag( $assoc_args, 'format' ) ) {
-            echo $post_ids; // compare \Post_Command::list_()
+        if ('ids' === $this->cli->flag($assoc_args, 'format')) {
+            echo $post_ids;
         } else {
-            $this->cli->success( sprintf( 'Generated %d posts.', $assoc_args['count'] ) );
+            $this->cli->success(sprintf('Generated %d posts.', $assoc_args['count']));
         }
     }
-
-}
-
 }

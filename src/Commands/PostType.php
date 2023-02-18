@@ -4,7 +4,9 @@ namespace Polylang_CLI\Commands;
 
 use \Polylang_CLI\Traits\Cpt;
 
-if ( ! class_exists( 'Polylang_CLI\Commands\PostTypeCommand' ) ) {
+if (class_exists('Polylang_CLI\Commands\PostTypeCommand')) {
+    return;
+}
 
 /**
  * Inspect and manage WordPress post types and their translation status.
@@ -29,9 +31,9 @@ class PostTypeCommand extends BaseCommand
      *
      * @alias manage
      */
-    public function enable( $args, $assoc_args ) {
-
-        return $this->manage( explode( '::', __METHOD__ )[1], 'post_types', $args[0] );
+    public function enable($args, $assoc_args)
+    {
+        return $this->manage(explode('::', __METHOD__)[1], 'post_types', $args[0]);
     }
 
     /**
@@ -48,9 +50,9 @@ class PostTypeCommand extends BaseCommand
      *
      * @alias unmanage
      */
-    public function disable( $args, $assoc_args ) {
-
-        return $this->manage( explode( '::', __METHOD__ )[1], 'post_types', $args[0] );
+    public function disable($args, $assoc_args)
+    {
+        return $this->manage(explode('::', __METHOD__)[1], 'post_types', $args[0]);
     }
 
     /**
@@ -62,22 +64,19 @@ class PostTypeCommand extends BaseCommand
      *
      * @subcommand list
      */
-    public function list_( $args, $assoc_args ) {
-
-        $post_types = get_post_types( $assoc_args, 'objects' );
+    public function list_($args, $assoc_args)
+    {
+        $post_types = get_post_types($assoc_args, 'objects');
 
         $translated = $this->pll->model->get_translated_post_types();
 
-        foreach ( $post_types as $post_type => $obj ) {
-
-            $obj->translated = ( isset( $translated[$post_type] ) ) ? '1' : '';
+        foreach ($post_types as $post_type => $obj) {
+            $obj->translated = (isset($translated[$post_type])) ? '1' : '';
         }
 
-        $formatter = $this->cli->formatter( $assoc_args, array( 'name', 'public', 'hierarchical', 'translated' ), 'post' );
+        $formatter = $this->cli->formatter($assoc_args, array('name', 'public', 'hierarchical', 'translated'), 'post');
 
-        $formatter->display_items( $post_types );
+        $formatter->display_items($post_types);
     }
-
-}
 
 }

@@ -4,7 +4,9 @@ namespace Polylang_CLI\Commands;
 
 use \Polylang_CLI\Traits\Cpt;
 
-if ( ! class_exists( 'Polylang_CLI\Commands\TaxonomyCommand' ) ) {
+if (class_exists('Polylang_CLI\Commands\TaxonomyCommand')) {
+    return;
+}
 
 /**
  * Inspect and manage WordPress taxonomies and their translation status.
@@ -29,9 +31,9 @@ class TaxonomyCommand extends BaseCommand
      *
      * @alias manage
      */
-    public function enable( $args, $assoc_args ) {
-
-        return $this->manage( __METHOD__, 'taxonomies', $args[0] );
+    public function enable($args, $assoc_args)
+    {
+        return $this->manage(__METHOD__, 'taxonomies', $args[0]);
     }
 
     /**
@@ -48,9 +50,9 @@ class TaxonomyCommand extends BaseCommand
      *
      * @alias unmanage
      */
-    public function disable( $args, $assoc_args ) {
-
-        return $this->manage( explode( '::', __METHOD__ )[1], 'post_types', $args[0] );
+    public function disable($args, $assoc_args)
+    {
+        return $this->manage(explode('::', __METHOD__)[1], 'post_types', $args[0]);
     }
 
     /**
@@ -77,31 +79,32 @@ class TaxonomyCommand extends BaseCommand
      *
      * @subcommand list
      */
-    public function list_( $args, $assoc_args ) {
+    public function list_($args, $assoc_args)
+    {
+        $formatter = $this->cli->formatter(
+            $assoc_args,
+            array('name', '_builtin', 'public', 'hierarchical', 'translated'),
+            'name'
+        );
 
-        $formatter = $this->cli->formatter( $assoc_args, array( 'name', '_builtin', 'public', 'hierarchical', 'translated' ), 'name' );
-
-        if ( isset( $assoc_args['object_type'] ) ) {
-            $assoc_args['object_type'] = array( $assoc_args['object_type'] );
+        if (isset($assoc_args['object_type'])) {
+            $assoc_args['object_type'] = array($assoc_args['object_type']);
         }
 
-        $taxonomies = get_taxonomies( $assoc_args, 'objects' );
+        $taxonomies = get_taxonomies($assoc_args, 'objects');
 
-        $taxonomies = array_map( function( $taxonomy ) {
-            $taxonomy->object_type = implode( ', ', $taxonomy->object_type );
+        $taxonomies = array_map(function ($taxonomy) {
+            $taxonomy->object_type = implode(', ', $taxonomy->object_type);
             return $taxonomy;
-        }, $taxonomies );
+        }, $taxonomies);
 
         $translated = $this->pll->model->get_translated_taxonomies();
 
-        foreach ( $taxonomies as $taxonomy => $obj ) {
+        foreach ($taxonomies as $taxonomy => $obj) {
 
-            $obj->translated = ( isset( $translated[$taxonomy] ) ) ? '1' : '';
+            $obj->translated = (isset($translated[$taxonomy])) ? '1' : '';
         }
 
-        $formatter->display_items( $taxonomies );
+        $formatter->display_items($taxonomies);
     }
-
-}
-
 }

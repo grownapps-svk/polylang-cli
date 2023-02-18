@@ -2,7 +2,9 @@
 
 namespace Polylang_CLI\Commands;
 
-if ( ! class_exists( 'Polylang_CLI\Commands\OptionCommand' ) ) {
+if (class_exists('Polylang_CLI\Commands\OptionCommand')) {
+    return;
+}
 
 /**
  * Inspect and manage Polylang settings.
@@ -18,7 +20,7 @@ class OptionCommand extends BaseCommand
         $this->options_default = \PLL_Install::get_default_options();
 
         # get list of syncable items (array key = input name, array value = translated item name)
-        $this->options_sync    = \PLL_Settings_Sync::list_metas_to_sync();
+        $this->options_sync = \PLL_Settings_Sync::list_metas_to_sync();
     }
 
     /**
@@ -36,26 +38,26 @@ class OptionCommand extends BaseCommand
      *
      * @subcommand list
      */
-    public function list_( $args, $assoc_args ) {
+    public function list_($args, $assoc_args)
+    {
+        $option = get_option('polylang');
 
-        $option = get_option( 'polylang' );
-
-        if ( empty( $option ) ) {
-            $this->cli->error( 'The option `polylang` is empty or does not exist.' );
+        if (empty($option)) {
+            $this->cli->error('The option `polylang` is empty or does not exist.');
         }
 
         $items = array();
 
-        foreach ( $option as $key => $value ) {
-            $obj               = new \stdClass();
-            $obj->option_name  = $key;
+        foreach ($option as $key => $value) {
+            $obj = new \stdClass();
+            $obj->option_name = $key;
             $obj->option_value = $value;
-            $items[]           = $obj;
+            $items[] = $obj;
         }
 
-        $formatter = $this->cli->formatter( $assoc_args, array( 'option_name', 'option_value' ) );
+        $formatter = $this->cli->formatter($assoc_args, array('option_name', 'option_value'));
 
-        $formatter->display_items( $items );
+        $formatter->display_items($items);
     }
 
     /**
@@ -65,30 +67,30 @@ class OptionCommand extends BaseCommand
      *
      *     $ wp pll option reset
      */
-    public function reset( $args, $assoc_args ) {
+    public function reset($args, $assoc_args)
+    {
+        $option = get_option('polylang');
 
-        $option = get_option( 'polylang' );
-
-        if ( empty( $option ) ) {
-            $this->cli->error( 'The option `polylang` is empty or does not exist.' );
+        if (empty($option)) {
+            $this->cli->error('The option `polylang` is empty or does not exist.');
         }
 
         # get default options
         $options = $this->options_default;
 
         # get default language @todo review
-        $options['default_lang'] = isset( $option['default_lang'] )
-            ? $option['default_lang']
-            : wp_list_pluck( $this->pll->model->get_languages_list(), 'slug' )[0];
+        $options['default_lang'] = isset($option['default_lang'])
+        ? $option['default_lang']
+        : wp_list_pluck($this->pll->model->get_languages_list(), 'slug')[0];
 
         # set the options
         $this->pll->model->options = $options;
 
         # update options, default category and nav menu locations
-        $this->pll->model->update_default_lang( $options['default_lang'] );
+        $this->pll->model->update_default_lang($options['default_lang']);
 
         # success!
-        $this->cli->success( 'Reset the `polylang` option to factory settings.' );
+        $this->cli->success('Reset the `polylang` option to factory settings.');
     }
 
     /**
@@ -113,22 +115,22 @@ class OptionCommand extends BaseCommand
      *
      *     $ wp pll option get default_lang
      */
-    public function get( $args, $assoc_args ) {
-
+    public function get($args, $assoc_args)
+    {
         # get Polylang options
-        $option = get_option( 'polylang' );
+        $option = get_option('polylang');
 
         # check if option exists
-        if ( empty( $option ) ) {
-            $this->cli->error( 'The option `polylang` is empty or does not exist.' );
+        if (empty($option)) {
+            $this->cli->error('The option `polylang` is empty or does not exist.');
         }
 
         # check if valid option name
-        if ( ! in_array( $args[0], array_merge( array_keys( $this->options_default ), array( 'default_lang' ) ) ) ) {
-            $this->cli->error( sprintf( 'Invalid option name: %s', $args[0] ) );
+        if (!in_array($args[0], array_merge(array_keys($this->options_default), array('default_lang')))) {
+            $this->cli->error(sprintf('Invalid option name: %s', $args[0]));
         }
 
-        $this->cli->print_value( $option[$args[0]], $assoc_args );
+        $this->cli->print_value($option[$args[0]], $assoc_args);
     }
 
     /**
@@ -146,39 +148,39 @@ class OptionCommand extends BaseCommand
      *
      *     $ wp pll option update default_lang nl
      */
-    public function update( $args, $assoc_args ) {
-
+    public function update($args, $assoc_args)
+    {
         # get Polylang options
-        $option = get_option( 'polylang' );
+        $option = get_option('polylang');
 
         # check if option exists
-        if ( empty( $option ) ) {
-            $this->cli->error( 'The option `polylang` is empty or does not exist.' );
+        if (empty($option)) {
+            $this->cli->error('The option `polylang` is empty or does not exist.');
         }
 
         # check if valid option name
-        if ( ! in_array( $args[0], array_merge( array_keys( $this->options_default ), array( 'default_lang' ) ) ) ) {
-            $this->cli->error( sprintf( 'Invalid option name: %s', $args[0] ) );
+        if (!in_array($args[0], array_merge(array_keys($this->options_default), array('default_lang')))) {
+            $this->cli->error(sprintf('Invalid option name: %s', $args[0]));
         }
 
         # disallow changing PLL version
-        if ( 'version' === $args[0] ) {
-            $this->cli->error( "You're not allowed to change the Polylang version." );
+        if ('version' === $args[0]) {
+            $this->cli->error("You're not allowed to change the Polylang version.");
         }
 
         # change default language
-        if ( 'default_lang' === $args[0] ) {
-            unset( $args[0] );
-            return $this->default_( array_values( $args ) );
+        if ('default_lang' === $args[0]) {
+            unset($args[0]);
+            return $this->default_(array_values($args));
         }
 
         # update Polylang options
         // update_option( 'polylang', array_merge( $option, array( $args[0] => $args[1] ) ) );
-        $this->pll->model->options = array_merge( $option, array( $args[0] => $args[1] ) );
-        $this->pll->model->update_default_lang( $this->api->default_language() );
+        $this->pll->model->options = array_merge($option, array($args[0] => $args[1]));
+        $this->pll->model->update_default_lang($this->api->default_language());
 
         # success!
-        $this->cli->success( sprintf( 'The value of %s was set to %s', $args[0], maybe_serialize( $args[1] ) ) );
+        $this->cli->success(sprintf('The value of %s was set to %s', $args[0], maybe_serialize($args[1])));
     }
 
     /**
@@ -198,38 +200,38 @@ class OptionCommand extends BaseCommand
      *
      * @subcommand default
      */
-    public function default_( $args, $assoc_args = array() )
+    public function default_($args, $assoc_args = array())
     {
-        if ( ! $languages = $this->pll->model->get_languages_list() ) {
-            return $this->cli->warning( "No languages are currently configured." );
+        if (!$languages = $this->pll->model->get_languages_list()) {
+            return $this->cli->warning("No languages are currently configured.");
         }
 
         # if no language provided, return the default language
-        if ( empty( $args ) ) {
-            return $this->get( array( 'default_lang' ), array() );
+        if (empty($args)) {
+            return $this->get(array('default_lang'), array());
         }
 
         # get the default language
         $default = $this->api->default_language();
 
         # sanitize user input
-        $language = isset( $args[0] ) && $args[0] ? sanitize_title_with_dashes( $args[0] ) : false;
+        $language = isset($args[0]) && $args[0] ? sanitize_title_with_dashes($args[0]) : false;
 
         # check if submitted language is already the default
-        if ( empty( $language ) || $default === $language ) {
-            return $this->cli->warning( "{$default} is currently the default language");
+        if (empty($language) || $default === $language) {
+            return $this->cli->warning("{$default} is currently the default language");
         }
 
         # check if submitted language is installed
-        if ( ! in_array( $language, wp_list_pluck( $languages, 'slug' ) ) ) {
-            $this->cli->error( "The language '$language' is currently not installed" );
+        if (!in_array($language, wp_list_pluck($languages, 'slug'))) {
+            $this->cli->error("The language '$language' is currently not installed");
         }
 
         # set the default language
-        $this->pll->model->update_default_lang( $language );
+        $this->pll->model->update_default_lang($language);
 
         # this can't go wrong
-        $this->cli->success( "Default language was set to {$language}" );
+        $this->cli->success("Default language was set to {$language}");
     }
 
     /**
@@ -261,25 +263,25 @@ class OptionCommand extends BaseCommand
      *
      * @alias manage
      */
-    public function sync( $args, $assoc_args ) {
+    public function sync($args, $assoc_args)
+    {
+        if ($args[0] === 'all') {
 
-        if ( $args[0] === 'all' ) {
-
-            $this->pll->model->options['sync'] = array_keys( $this->options_sync );
+            $this->pll->model->options['sync'] = array_keys($this->options_sync);
 
             # update options, default category and nav menu locations
-            $this->pll->model->update_default_lang( $this->api->default_language() );
+            $this->pll->model->update_default_lang($this->api->default_language());
 
-            return $this->cli->success( 'Polylang `sync` option updated.' );
+            return $this->cli->success('Polylang `sync` option updated.');
         }
 
         # get args as array
-        $args = explode( ',', $args[0] );
+        $args = explode(',', $args[0]);
 
         # validate args
-        foreach ( $args as $key ) {
-            if ( ! in_array( $key, array_keys( $this->options_sync ) ) ) {
-                $this->cli->error( sprintf( 'Invalid key: %s', $key ) );
+        foreach ($args as $key) {
+            if (!in_array($key, array_keys($this->options_sync))) {
+                $this->cli->error(sprintf('Invalid key: %s', $key));
             }
         }
 
@@ -287,14 +289,14 @@ class OptionCommand extends BaseCommand
         $settings = (array) $this->pll->model->options['sync'];
 
         # update current settings
-        $settings = array_merge( $settings, $args );
+        $settings = array_merge($settings, $args);
 
         $this->pll->model->options['sync'] = $settings;
 
         # update options, default category and nav menu locations
-        $this->pll->model->update_default_lang( $this->api->default_language() );
+        $this->pll->model->update_default_lang($this->api->default_language());
 
-        $this->cli->success( 'Polylang `sync` option updated.' );
+        $this->cli->success('Polylang `sync` option updated.');
     }
 
     /**
@@ -326,26 +328,26 @@ class OptionCommand extends BaseCommand
      *
      * @alias unmanage
      */
-    public function unsync( $args, $assoc_args ) {
-
-        if ( $args[0] === 'all' ) {
+    public function unsync($args, $assoc_args)
+    {
+        if ($args[0] === 'all') {
 
             $this->pll->model->options['sync'] = array();
 
             # update options, default category and nav menu locations
-            $this->pll->model->update_default_lang( $this->api->default_language() );
+            $this->pll->model->update_default_lang($this->api->default_language());
 
-            return $this->cli->success( 'Polylang `sync` option updated.' );
+            return $this->cli->success('Polylang `sync` option updated.');
         }
 
         # get args as array
-        $args = explode( ',', $args[0] );
+        $args = explode(',', $args[0]);
 
         # validate args
-        foreach ( $args as $i => $key ) {
-            if ( ! in_array( $key, array_keys( $this->options_sync ) ) ) {
-                unset( $args[$i] );
-                $this->cli->warning( sprintf( 'Invalid key: %s', $key ) );
+        foreach ($args as $i => $key) {
+            if (!in_array($key, array_keys($this->options_sync))) {
+                unset($args[$i]);
+                $this->cli->warning(sprintf('Invalid key: %s', $key));
             }
         }
 
@@ -353,16 +355,13 @@ class OptionCommand extends BaseCommand
         $settings = (array) $this->pll->model->options['sync'];
 
         # update current settings
-        $settings = array_diff( $settings, $args );
+        $settings = array_diff($settings, $args);
 
-        $this->pll->model->options['sync'] = array_values( $settings );
+        $this->pll->model->options['sync'] = array_values($settings);
 
         # update options, default category and nav menu locations
-        $this->pll->model->update_default_lang( $this->api->default_language() );
+        $this->pll->model->update_default_lang($this->api->default_language());
 
-        $this->cli->success( 'Polylang `sync` option updated.' );
+        $this->cli->success('Polylang `sync` option updated.');
     }
-
-}
-
 }

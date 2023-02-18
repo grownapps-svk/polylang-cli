@@ -13,40 +13,42 @@
  *   vendor/bin/behat --format progress $BEHAT_TAGS
  */
 
-function version_tags( $prefix, $current, $operator = '<' ) {
-	if ( ! $current )
-		return array();
+function version_tags($prefix, $current, $operator = '<')
+{
+    if (!$current) {
+        return array();
+    }
 
-	exec( "grep '@{$prefix}-[0-9\.]*' -h -o features/*.feature | uniq", $existing_tags );
+    exec("grep '@{$prefix}-[0-9\.]*' -h -o features/*.feature | uniq", $existing_tags);
 
-	$skip_tags = array();
+    $skip_tags = array();
 
-	foreach ( $existing_tags as $tag ) {
-		$compare = str_replace( "@{$prefix}-", '', $tag );
-		if ( version_compare( $current, $compare, $operator ) ) {
-			$skip_tags[] = $tag;
-		}
-	}
+    foreach ($existing_tags as $tag) {
+        $compare = str_replace("@{$prefix}-", '', $tag);
+        if (version_compare($current, $compare, $operator)) {
+            $skip_tags[] = $tag;
+        }
+    }
 
-	return $skip_tags;
+    return $skip_tags;
 }
 
 $wp_version_reqs = array();
 // Only apply @require-wp tags when WP_VERSION isn't 'latest' or 'nightly'
 // 'latest' and 'nightly' are expected to work with all features
-if ( ! in_array( getenv( 'WP_VERSION' ), array( 'latest', 'nightly', 'trunk' ), true ) ) {
-	$wp_version_reqs = version_tags( 'require-wp', getenv( 'WP_VERSION' ), '<' );
+if (!in_array(getenv('WP_VERSION'), array('latest', 'nightly', 'trunk'), true)) {
+    $wp_version_reqs = version_tags('require-wp', getenv('WP_VERSION'), '<');
 }
 
 // Translations may not be available for trunk
-if ( 'trunk' === getenv( 'WP_VERSION' ) ) {
-	$wp_version_reqs = array( '@core-language' );
+if ('trunk' === getenv('WP_VERSION')) {
+    $wp_version_reqs = array('@core-language');
 }
 
 $skip_tags = array_merge(
-	$wp_version_reqs,
-	version_tags( 'require-php', PHP_VERSION, '<' ),
-	version_tags( 'less-than-php', PHP_VERSION, '>' )
+    $wp_version_reqs,
+    version_tags('require-php', PHP_VERSION, '<'),
+    version_tags('less-than-php', PHP_VERSION, '>')
 );
 
 # Skip Github API tests by default because of rate limiting. See https://github.com/wp-cli/wp-cli/issues/1612
@@ -56,25 +58,26 @@ $skip_tags[] = '@github-api';
 $skip_tags[] = '@broken';
 
 # Require PHP extension, eg 'imagick'.
-function extension_tags() {
-	$extension_tags = array();
-	exec( "grep '@require-extension-[A-Za-z_]*' -h -o features/*.feature | uniq", $extension_tags );
+function extension_tags()
+{
+    $extension_tags = array();
+    exec("grep '@require-extension-[A-Za-z_]*' -h -o features/*.feature | uniq", $extension_tags);
 
-	$skip_tags = array();
+    $skip_tags = array();
 
-	$substr_start = strlen( '@require-extension-' );
-	foreach ( $extension_tags as $tag ) {
-		$extension = substr( $tag, $substr_start );
-		if ( ! extension_loaded( $extension ) ) {
-			$skip_tags[] = $tag;
-		}
-	}
+    $substr_start = strlen('@require-extension-');
+    foreach ($extension_tags as $tag) {
+        $extension = substr($tag, $substr_start);
+        if (!extension_loaded($extension)) {
+            $skip_tags[] = $tag;
+        }
+    }
 
-	return $skip_tags;
+    return $skip_tags;
 }
 
-$skip_tags = array_merge( $skip_tags, extension_tags() );
+$skip_tags = array_merge($skip_tags, extension_tags());
 
-if ( !empty( $skip_tags ) ) {
-	echo '--tags=~' . implode( '&&~', $skip_tags );
+if (!empty($skip_tags)) {
+    echo '--tags=~' . implode('&&~', $skip_tags);
 }

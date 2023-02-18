@@ -2,7 +2,9 @@
 
 namespace Polylang_CLI\Commands;
 
-if ( ! class_exists( 'Polylang_CLI\Commands\LangCommand' ) ) {
+if (class_exists('Polylang_CLI\Commands\LangCommand')) {
+    return;
+}
 
 /**
  * Manage Polylang language taxonomy and taxonomy terms.
@@ -89,27 +91,27 @@ class LangCommand extends BaseCommand
      *
      * @subcommand list
      */
-    public function list_( $args, $assoc_args ) {
-
-        if ( '0' === $this->cli->flag( $assoc_args, 'pll' ) ) {
-            return $this->cli->command( array( 'term', 'list', $this->taxonomy ), $assoc_args );
+    public function list_($args, $assoc_args)
+    {
+        if ('0' === $this->cli->flag($assoc_args, 'pll')) {
+            return $this->cli->command(array('term', 'list', $this->taxonomy), $assoc_args);
         }
 
         $languages = $this->pll->model->get_languages_list();
 
         # invoke formatter
-        $formatter = $this->cli->formatter( $assoc_args, $this->fields_language, 'language' );
+        $formatter = $this->cli->formatter($assoc_args, $this->fields_language, 'language');
 
         # force LTR for table and csv display, see https://git.io/vynJY and https://git.io/vynJZ
-        foreach ( $languages as $language ) {
+        foreach ($languages as $language) {
 
-            if ( wp_validate_boolean( $language->is_rtl ) ) {
+            if (wp_validate_boolean($language->is_rtl)) {
                 $language->name = "\xe2\x80\x8e" . $language->name;
             }
         }
 
         # display items
-        $formatter->display_items( $languages );
+        $formatter->display_items($languages);
     }
 
     /**
@@ -125,15 +127,15 @@ class LangCommand extends BaseCommand
      *     wp pll lang url en
      *     wp pll lang url es
      */
-    public function url( $args ) {
+    public function url($args)
+    {
+        $term_id = $this->get_lang_id_by_slug($args[0]);
 
-        $term_id = $this->get_lang_id_by_slug( $args[0] );
-
-        if ( empty( $term_id ) ) {
-            $this->cli->error( sprintf( 'Invalid language code: %s', $args[0] ) );
+        if (empty($term_id)) {
+            $this->cli->error(sprintf('Invalid language code: %s', $args[0]));
         }
 
-        $this->cli->runcommand( "term list {$this->taxonomy} --include={$term_id} --field=url" );
+        $this->cli->runcommand("term list {$this->taxonomy} --include={$term_id} --field=url");
     }
 
     /* CRUD METHODS ***********************************************************/
@@ -159,11 +161,11 @@ class LangCommand extends BaseCommand
      *
      *     wp pll lang get en --format=json
      */
-    public function get( $args, $assoc_args ) {
+    public function get($args, $assoc_args)
+    {
+        $term_id = $this->get_lang_id_by_slug($args[0]);
 
-        $term_id = $this->get_lang_id_by_slug( $args[0] );
-
-        $this->cli->command( array( 'term', 'get', $this->taxonomy, $term_id ), $assoc_args );
+        $this->cli->command(array('term', 'get', $this->taxonomy, $term_id), $assoc_args);
     }
 
     /**
@@ -208,35 +210,37 @@ class LangCommand extends BaseCommand
      *     7/7 [--no_default_cat=<bool>]:
      *     Success: Language added.
      */
-    public function create( $args, $assoc_args ) {
-
-        list( $name, $slug, $locale ) = $args;
+    public function create($args, $assoc_args)
+    {
+        list($name, $slug, $locale) = $args;
 
         # parse args
         $defaults = array(
-            'rtl'            => false,
-            'order'          => 0,
-            'flag'           => false,
+            'rtl' => false,
+            'order' => 0,
+            'flag' => false,
             'no_default_cat' => false,
         );
-        $assoc_args = wp_parse_args( $assoc_args, $defaults );
+        $assoc_args = wp_parse_args($assoc_args, $defaults);
 
         # modify data array
         $assoc_args['term_group'] = $assoc_args['order'];
-        unset( $assoc_args['order'] );
+        unset($assoc_args['order']);
 
-        list( $rtl, $flag, $no_default_cat, $term_group ) = array_values( $assoc_args );
+        list($rtl, $flag, $no_default_cat, $term_group) = array_values($assoc_args);
 
-        $language = $this->pll->model->add_language( compact( 'name', 'slug', 'locale', 'rtl', 'flag', 'no_default_cat', 'term_group' ) );
+        $language = $this->pll->model->add_language(
+            compact('name', 'slug', 'locale', 'rtl', 'flag', 'no_default_cat', 'term_group')
+        );
 
-        $result = empty( $language ) ? 'error' : 'success';
+        $result = empty($language) ? 'error' : 'success';
 
-        $this->settings_errors( $result );
+        $this->settings_errors($result);
 
         # install core language files
         $this->cli->runcommand(
             "core language install $locale --prompt=0",
-            array( 'return' => false, 'launch' => true, 'exit_error' => false )
+            array('return' => false, 'launch' => true, 'exit_error' => false)
         );
     }
 
@@ -270,47 +274,52 @@ class LangCommand extends BaseCommand
      *
      *     wp pll lang update en --name=English --order=15
      */
-    public function update( $args, $assoc_args ) {
-
-        $term_id = $this->get_lang_id_by_slug( $args[0] );
+    public function update($args, $assoc_args)
+    {
+        $term_id = $this->get_lang_id_by_slug($args[0]);
 
         # check if we have a valid language code
-        if ( empty( $term_id ) ) {
-            $this->cli->error( sprintf( 'Invalid language code. Run `%s` to get a list of valid language codes.', 'wp pll lang list --field=locale' ) );
+        if (empty($term_id)) {
+            $this->cli->error(
+                sprintf(
+                    'Invalid language code. Run `%s` to get a list of valid language codes.',
+                    'wp pll lang list --field=locale'
+                )
+            );
         }
 
         # get the language
-        $object = $this->pll->model->get_language( $term_id );
+        $object = $this->pll->model->get_language($term_id);
 
         # modify array item
-        if ( isset( $assoc_args['order'] ) ) {
+        if (isset($assoc_args['order'])) {
             $assoc_args['term_group'] = $assoc_args['order'];
-            unset( $assoc_args['order'] );
+            unset($assoc_args['order']);
         }
 
         # merge user defined and default args
         $defaults = array(
-            'name'       => $object->name,
-            'slug'       => $object->slug,
-            'locale'     => $object->locale,
-            'rtl'        => $object->is_rtl, // @todo check
+            'name' => $object->name,
+            'slug' => $object->slug,
+            'locale' => $object->locale,
+            'rtl' => $object->is_rtl, // @todo check
             'term_group' => $object->term_group,
-            'flag'       => $object->flag_code,
+            'flag' => $object->flag_code,
         );
-        $assoc_args = wp_parse_args( $assoc_args, $defaults );
+        $assoc_args = wp_parse_args($assoc_args, $defaults);
 
         # make protected method accessible
-        $validate = new \ReflectionMethod( 'PLL_Admin_Model', 'validate_lang' );
-        $validate->setAccessible( true );
-        $valid = $validate->invokeArgs( $this->pll->model, array( $assoc_args, $object ) );
+        $validate = new \ReflectionMethod('PLL_Admin_Model', 'validate_lang');
+        $validate->setAccessible(true);
+        $valid = $validate->invokeArgs($this->pll->model, array($assoc_args, $object));
 
         # check if language valid
-        if ( ! $valid ) {
-            $this->settings_errors( 'error' );
+        if (!$valid) {
+            $this->settings_errors('error');
         }
 
         # update the language
-        $this->pll->model->update_language( array_merge( array( 'lang_id' => $term_id ), $assoc_args ) );
+        $this->pll->model->update_language(array_merge(array('lang_id' => $term_id), $assoc_args));
 
         # success!
         $this->settings_errors();
@@ -345,46 +354,49 @@ class LangCommand extends BaseCommand
      *     # delete all languages except the default language
      *     $ wp pll lang delete --all --keep_default
      */
-    public function delete( $args, $assoc_args ) {
-
-        if ( ! $this->cli->flag( $assoc_args, 'all' ) && empty( $args ) ) {
-            $this->cli->error( "You must specify at least one language or use --all." );
+    public function delete($args, $assoc_args)
+    {
+        if (!$this->cli->flag($assoc_args, 'all') && empty($args)) {
+            $this->cli->error("You must specify at least one language or use --all.");
         }
 
-        if ( $this->cli->flag( $assoc_args, 'all' ) ) {
+        if ($this->cli->flag($assoc_args, 'all')) {
             $args = array();
         }
 
-        $slugs = wp_list_pluck( $this->pll->model->get_languages_list(), 'locale', 'slug' );
+        $slugs = wp_list_pluck($this->pll->model->get_languages_list(), 'locale', 'slug');
 
-        $slugs = ( $this->cli->flag( $assoc_args, 'all' ) )
-            ? $slugs
-            : array_intersect_key( $slugs, array_flip( explode( ',', $args[0] ) ) );
+        $slugs = ($this->cli->flag($assoc_args, 'all'))
+        ? $slugs
+        : array_intersect_key($slugs, array_flip(explode(',', $args[0])));
 
-        if ( empty( $slugs ) ) {
-            $this->cli->error( 'Please enter 1 or more valid language codes. Run `wp pll lang list` to get a list of installed languages.' );
+        if (empty($slugs)) {
+            $this->cli->error(
+                'Please enter 1 or more valid language codes.'
+                . ' Run `wp pll lang list` to get a list of installed languages.'
+            );
         }
 
         $i = 0;
 
-        foreach ( $slugs as $slug => $locale ) {
+        foreach ($slugs as $slug => $locale) {
 
-            if ( $slug === $this->api->default_language() && $this->cli->flag( $assoc_args, 'keep_default' ) ) {
-                $this->cli->log( sprintf( 'Notice: Keeping default language %s (%s).', $slug, $locale ) );
+            if ($slug === $this->api->default_language() && $this->cli->flag($assoc_args, 'keep_default')) {
+                $this->cli->log(sprintf('Notice: Keeping default language %s (%s).', $slug, $locale));
                 continue;
             }
 
-            $term_id = $this->get_lang_id_by_slug( $slug );
+            $term_id = $this->get_lang_id_by_slug($slug);
 
-            if ( empty( $term_id ) ) {
-                $this->cli->warning( sprintf( 'Invalid language code: %s (%s).', $slug, $locale ) );
+            if (empty($term_id)) {
+                $this->cli->warning(sprintf('Invalid language code: %s (%s).', $slug, $locale));
                 continue;
             }
 
-            $this->pll->model->delete_language( $term_id );
+            $this->pll->model->delete_language($term_id);
 
-            foreach ( $this->get_settings_errors()['success'] as $msg ) {
-                $this->cli->success( sprintf( '%s %s (%s)', $msg, $slug, $locale ) );
+            foreach ($this->get_settings_errors()['success'] as $msg) {
+                $this->cli->success(sprintf('%s %s (%s)', $msg, $slug, $locale));
             }
 
             # We need to clear the settings errors to prevent loop from breaking
@@ -392,22 +404,22 @@ class LangCommand extends BaseCommand
             $this->clear_settings_errors();
 
             # uninstall core language files, if not in use by another language
-            $locales = array_count_values( wp_list_pluck( $this->pll->model->get_languages_list(), 'locale' ) );
+            $locales = array_count_values(wp_list_pluck($this->pll->model->get_languages_list(), 'locale'));
 
-            if ( ! isset( $locales[$locale] ) ) {
+            if (!isset($locales[$locale])) {
 
                 $this->cli->runcommand(
                     "core language uninstall $locale",
-                    array( 'return' => false, 'launch' => true, 'exit_error' => false )
+                    array('return' => false, 'launch' => true, 'exit_error' => false)
                 );
             }
 
             $i++;
         }
 
-        $func = ( $i === count( $slugs ) ) ? 'success' : ( ( $i > 0 ) ? 'warning' : 'error' );
+        $func = ($i === count($slugs)) ? 'success' : (($i > 0) ? 'warning' : 'error');
 
-        $this->cli->$func( sprintf( '%d of %d languages deleted', $i, count( $slugs ) ) );
+        $this->cli->$func(sprintf('%d of %d languages deleted', $i, count($slugs)));
     }
 
     /* MISCELLANEOUS METHODS **************************************************/
@@ -424,33 +436,33 @@ class LangCommand extends BaseCommand
      *
      *     wp pll lang generate --count=25
      */
-    public function generate( $args, $assoc_args ) {
-
-        if ( ! defined ( 'PLL_SETTINGS_INC' ) ) {
-            $this->cli->error( sprintf( 'The %s constant is not defined.', 'PLL_SETTINGS_INC' ) );
+    public function generate($args, $assoc_args)
+    {
+        if (!defined('PLL_SETTINGS_INC')) {
+            $this->cli->error(sprintf('The %s constant is not defined.', 'PLL_SETTINGS_INC'));
         }
 
         # get predefined languages
-        require( PLL_SETTINGS_INC . '/languages.php' );
+        require PLL_SETTINGS_INC . '/languages.php';
 
         # parse assoc args
-        extract( array_merge( array( 'count' => 10 ), $assoc_args ), EXTR_SKIP );
+        extract(array_merge(array('count' => 10), $assoc_args), EXTR_SKIP);
 
         # check count
-        if ( $count > count( $languages ) ) {
-            $this->cli->error( sprintf( 'Count value exceeds limit. There are only %d languages available.', count( $languages ) ) );
+        if ($count > count($languages)) {
+            $this->cli->error(sprintf('Count value exceeds limit. There are only %d languages available.', count($languages)));
         }
 
         global $wpdb;
 
-        $max_term_group = (int) $wpdb->get_var( "SELECT term_group FROM $wpdb->terms ORDER BY term_group DESC LIMIT 1" );
+        $max_term_group = (int) $wpdb->get_var("SELECT term_group FROM $wpdb->terms ORDER BY term_group DESC LIMIT 1");
         $max_term_group = $max_term_group + 1;
 
         # get installed locales
-        $installed_locales = wp_list_pluck( $this->pll->model->get_languages_list(), 'locale' );
+        $installed_locales = wp_list_pluck($this->pll->model->get_languages_list(), 'locale');
 
         # init progress bar
-        $notify = $this->cli->progress( 'Generating languages', $count );
+        $notify = $this->cli->progress('Generating languages', $count);
 
         # init checklist
         $checklist = $term_ids = array();
@@ -470,29 +482,33 @@ class LangCommand extends BaseCommand
          * [3] => text direction
          * [4] => flag code
          */
-        foreach ( $languages as $key => $language ) {
-
+        foreach ($languages as $key => $language) {
             # limit iteration
-            if ( $i >= $count )
+            if ($i >= $count) {
                 break;
+            }
 
             # check if language locale is already in use
-            if ( in_array( $language[1], $installed_locales ) )
+            if (in_array($language[1], $installed_locales)) {
                 continue;
+            }
 
             $slug = $language[0];
 
             # if slug is in our checklist, try again
-            if ( in_array( $slug, $checklist ) )
-                $slug = strtolower( str_replace( '_', '-', $key ) );
+            if (in_array($slug, $checklist)) {
+                $slug = strtolower(str_replace('_', '-', $key));
+            }
 
             # skip if new slug in checklist
-            if ( in_array( $slug, $checklist ) )
+            if (in_array($slug, $checklist)) {
                 continue;
+            }
 
             # skip if language is installed
-            if ( false !== get_term_by( 'slug', $slug, $this->taxonomy ) )
+            if (false !== get_term_by('slug', $slug, $this->taxonomy)) {
                 continue;
+            }
 
             # add slug to checklist
             $checklist[] = $slug;
@@ -500,19 +516,17 @@ class LangCommand extends BaseCommand
             # add the language
             $language = $this->pll->model->add_language(
                 array(
-                    'name'       => $language[2],
-                    'slug'       => $slug,
-                    'locale'     => $language[1],
-                    'rtl'        => ( $language[3] == 'rtl' ) ? 1 : 0,
+                    'name' => $language[2],
+                    'slug' => $slug,
+                    'locale' => $language[1],
+                    'rtl' => ($language[3] == 'rtl') ? 1 : 0,
                     'term_group' => $max_term_group++,
-                    'flag'       => $language[4],
+                    'flag' => $language[4],
                 )
             );
 
             # wish PLL()->model->add_language() returned term ID instead of true
-            $term_ids[] = $this->get_lang_id_by_slug( $slug );
-
-            // $this->get_settings_errors();
+            $term_ids[] = $this->get_lang_id_by_slug($slug);
 
             # We need to clear the settings errors to prevent loop from breaking
             # Polylang uses wp settings errors to display admin messages
@@ -529,12 +543,20 @@ class LangCommand extends BaseCommand
         $notify->finish();
 
         # list the newly created languages
-        $this->cli->command( array( 'pll', 'lang', 'list'), array( 'include' => $term_ids ) ); // @todo allow list to display selection
+        $this->cli->command(array('pll', 'lang', 'list'), array('include' => $term_ids));
 
         # success message
-        $this->cli->success( sprintf( 'Generated %1$d of %2$d languages. New term IDs: %3$s', (int) $i, (int) $count, implode( ',', $term_ids ) ) );
+        $this->cli->success(
+            sprintf(
+                'Generated %1$d of %2$d languages. New term IDs: %3$s',
+                (int) $i,
+                (int) $count,
+                implode(
+                    ',',
+                    $term_ids
+                )
+            )
+        );
     }
-
-}
 
 }

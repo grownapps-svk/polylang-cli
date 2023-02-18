@@ -2,15 +2,17 @@
 
 namespace Polylang_CLI\Commands;
 
-if ( ! class_exists( 'Polylang_CLI\Commands\CacheCommand' ) ) {
+if (class_exists('Polylang_CLI\Commands\CacheCommand')) {
+    return;
+}
 
 /**
  * Inspect and manage Polylang languages cache.
  *
  * @package Polylang_CLI
  */
-class CacheCommand extends BaseCommand {
-
+class CacheCommand extends BaseCommand
+{
     /**
      * Gets the Polylang languages cache.
      *
@@ -29,15 +31,15 @@ class CacheCommand extends BaseCommand {
      *     term_id,name,slug,term_group,term_taxonomy_id,taxonomy,description,parent,count,tl_term_id,tl_term_taxonomy_id,tl_count,locale,is_rtl,flag_url,flag,home_url,search_url,host,mo_id,page_on_front,page_for_posts,filter,flag_code
      *     2,Nederlands,nl,0,2,language,nl_NL,0,10,3,3,42,nl_NL,0,,,http://example.dev/nl/,http://example.dev/nl/,,3,,,raw,
      */
-    public function get( $args, $assoc_args ) {
+    public function get($args, $assoc_args)
+    {
+        $transient = get_transient('pll_languages_list');
 
-        $transient = get_transient( 'pll_languages_list' );
+        $this->cli->success(sprintf('There are %d items in the languages cache:', count((array) $transient)));
 
-        $this->cli->success( sprintf( 'There are %d items in the languages cache:', count( (array) $transient ) ) );
+        $formatter = $this->cli->formatter($assoc_args, array_keys($transient[0]));
 
-        $formatter = $this->cli->formatter( $assoc_args, array_keys( $transient[0] ) );
-
-        $formatter->display_items( $transient );
+        $formatter->display_items($transient);
     }
 
     /**
@@ -52,12 +54,10 @@ class CacheCommand extends BaseCommand {
      *
      * @alias clean
      */
-    public function clear() {
-
+    public function clear()
+    {
         $this->pll->model->clean_languages_cache();
 
-        $this->cli->success( 'Languages cache cleared.' );
+        $this->cli->success('Languages cache cleared.');
     }
-}
-
 }

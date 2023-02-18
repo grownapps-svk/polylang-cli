@@ -2,9 +2,12 @@
 
 namespace Polylang_CLI\Api;
 
-if ( ! class_exists( 'Polylang_CLI\Api\Cli' ) ) {
+if (class_exists('Polylang_CLI\Api\Cli')) {
+    return;
+}
 
-class Cli {
+class Cli
+{
 
     /**
      * Run a given command within the current process using the same global.
@@ -12,9 +15,9 @@ class Cli {
      * @param array $args Positional arguments including command name
      * @param array $assoc_args
      */
-    public function command( $args, $assoc_args = array() ) {
-
-        \WP_CLI::run_command( $args, $assoc_args );
+    public function command($args, $assoc_args = array())
+    {
+        \WP_CLI::run_command($args, $assoc_args);
     }
 
     /**
@@ -35,9 +38,9 @@ class Cli {
      * @param array $options Configuration options for command execution.
      * @return mixed
      */
-    public function runcommand( $command, $options = array() ) {
-
-        \WP_CLI::runcommand( $command, $options );
+    public function runcommand($command, $options = array())
+    {
+        \WP_CLI::runcommand($command, $options);
     }
 
     /**
@@ -54,9 +57,9 @@ class Cli {
      * @param mixed  $default     Default value for the flag. Default: NULL
      * @return mixed
      */
-    public function flag( $assoc_args, $flag, $default = null ) {
-
-        return \WP_CLI\Utils\get_flag_value( $assoc_args, $flag, $default );
+    public function flag($assoc_args, $flag, $default = null)
+    {
+        return \WP_CLI\Utils\get_flag_value($assoc_args, $flag, $default);
     }
 
     /**
@@ -70,9 +73,9 @@ class Cli {
      * @param string $question   Question to display before the prompt.
      * @param array  $assoc_args Skips prompt if 'yes' is provided.
      */
-    public function confirm( $question, $assoc_args = array() ) {
-
-        \WP_CLI::confirm( $question, $assoc_args );
+    public function confirm($question, $assoc_args = array())
+    {
+        \WP_CLI::confirm($question, $assoc_args);
     }
 
     /**
@@ -88,9 +91,9 @@ class Cli {
      * @param integer $count    Total number of ticks to be performed.
      * @return \WP_CLI\Utils\make_progress_bar
      */
-    public function progress( $message, $count ) {
-
-        return \WP_CLI\Utils\make_progress_bar( $message, $count );
+    public function progress($message, $count)
+    {
+        return \WP_CLI\Utils\make_progress_bar($message, $count);
     }
 
     /**
@@ -100,9 +103,9 @@ class Cli {
      * @param array $fields Fields to display of each item.
      * @param string $prefix Check if fields have a standard prefix.
      */
-    public function formatter( &$assoc_args, $fields = null, $prefix = false ) {
-
-        return new \WP_CLI\Formatter( $assoc_args, $fields, $prefix );
+    public function formatter(&$assoc_args, $fields = null, $prefix = false)
+    {
+        return new \WP_CLI\Formatter($assoc_args, $fields, $prefix);
     }
 
     /**
@@ -116,9 +119,9 @@ class Cli {
      * @param string $message Message to write to STDOUT.
      * @return null
      */
-    public function success( $message ) {
-
-        \WP_CLI::success( $message );
+    public function success($message)
+    {
+        \WP_CLI::success($message);
     }
 
     /**
@@ -133,9 +136,9 @@ class Cli {
      * @param string $message Message to write to STDERR.
      * @return null
      */
-    public function warning( $message ) {
-
-        \WP_CLI::warning( $message );
+    public function warning($message)
+    {
+        \WP_CLI::warning($message);
     }
 
     /**
@@ -152,9 +155,9 @@ class Cli {
      * @param boolean|integer  $exit    True defaults to exit(1).
      * @return null
      */
-    public function error( $message ) {
-
-        \WP_CLI::error( $message );
+    public function error($message)
+    {
+        \WP_CLI::error($message);
     }
 
     /**
@@ -170,9 +173,9 @@ class Cli {
      * @access public
      * @param string $message Message to write to STDOUT.
      */
-    public function log( $message ) {
-
-        \WP_CLI::log( $message );
+    public function log($message)
+    {
+        \WP_CLI::log($message);
     }
 
     /**
@@ -181,11 +184,8 @@ class Cli {
      * @param mixed $value Value to display.
      * @param array $assoc_args Arguments passed to the command, determining format.
      */
-    public function print_value( $value, $assoc_args ) {
-
-        \WP_CLI::print_value( $value, $assoc_args );
+    public function print_value($value, $assoc_args)
+    {
+        \WP_CLI::print_value($value, $assoc_args);
     }
-
-}
-
 }

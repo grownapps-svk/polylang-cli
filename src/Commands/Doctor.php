@@ -2,14 +2,17 @@
 
 namespace Polylang_CLI\Commands;
 
-if ( ! class_exists( 'Polylang_CLI\Commands\DoctorCommand' ) ) {
+if (class_exists('Polylang_CLI\Commands\DoctorCommand')) {
+    return;
+}
 
 /**
  * Troubleshoot Polylang.
  *
  * @package Polylang_CLI
  */
-class DoctorCommand extends BaseCommand {
+class DoctorCommand extends BaseCommand
+{
 
     /**
      * List untranslated post and term objects (translatable).
@@ -32,57 +35,50 @@ class DoctorCommand extends BaseCommand {
      *
      *     wp pll doctor check
      */
-    public function check( $args, $assoc_args ) {
-
+    public function check($args, $assoc_args)
+    {
         $untranslated = $this->pll->model->get_objects_with_no_lang();
 
-        if ( empty( $untranslated ) ) {
-            return $this->cli->success( 'All translatable post and term objects are assigned to a language.' );
+        if (empty($untranslated)) {
+            return $this->cli->success('All translatable post and term objects are assigned to a language.');
         }
 
-        foreach ( $untranslated as $type => $object_ids ) {
-
-            if ( empty( $object_ids ) ) {
+        foreach ($untranslated as $type => $object_ids) {
+            if (empty($object_ids)) {
                 continue;
             }
 
-            $type = rtrim( $type, 's' );
+            $type = rtrim($type, 's');
 
-            $this->cli->warning( sprintf( "%d untranslated %s objects:", count( $object_ids ), $type ) );
+            $this->cli->warning(sprintf("%d untranslated %s objects:", count($object_ids), $type));
 
-            switch ( $type ) :
-
-                case 'post' :
-
-                    $this->cli->command( array( $type, 'list' ),
+            switch ($type) {
+                case 'post':
+                    $this->cli->command(
+                        array($type, 'list'),
                         array(
-                            'post_type' => implode( ',', $this->pll->model->get_translated_post_types() ),
-                            'post__in' => implode( ',', $object_ids ),
-                            'format' => $assoc_args['format']
+                            'post_type' => implode(',', $this->pll->model->get_translated_post_types()),
+                            'post__in' => implode(',', $object_ids),
+                            'format' => $assoc_args['format'],
                         )
                     );
-
                     break;
 
-                case 'term' :
+                case 'term':
+                    $formatter = $this->cli->formatter($assoc_args, $this->fields_term, 'term');
 
-                    $formatter = $this->cli->formatter( $assoc_args, $this->fields_term, 'term' );
-
-                    $terms = get_terms( array(
-                        'taxonomy'   => null,
+                    $terms = get_terms(array(
+                        'taxonomy' => null,
                         'hide_empty' => false,
-                        'include'    => $object_ids
-                    ) );
+                        'include' => $object_ids,
+                    ));
 
-                    $formatter->display_items( $terms );
-
+                    $formatter->display_items($terms);
                     break;
 
-                default :
-
-                    $this->cli->error( sprintf( 'Invalid type: %s', $type ) );
-
-            endswitch;
+                default:
+                    $this->cli->error(sprintf('Invalid type: %s', $type));
+            }
         }
     }
 
@@ -95,28 +91,33 @@ class DoctorCommand extends BaseCommand {
      *
      * @alias mass-translate
      */
-    public function translate( $args, $assoc_args ) {
-
-        if ( empty( $arsg[0] ) ) {
-
+    public function translate($args, $assoc_args)
+    {
+        if (empty($args[0])) {
             $default_lang = $this->api->default_language();
 
             $posts = $terms = 0;
 
-            if ( $untranslated = $this->pll->model->get_objects_with_no_lang() ) {
-
-                if ( ! empty( $untranslated['posts'] ) ) {
-                    $posts = count( $untranslated['posts'] );
-                    $this->pll->model->set_language_in_mass( 'post', $untranslated['posts'], $default_lang );
+            if ($untranslated = $this->pll->model->get_objects_with_no_lang()) {
+                if (!empty($untranslated['posts'])) {
+                    $posts = count($untranslated['posts']);
+                    $this->pll->model->set_language_in_mass('post', $untranslated['posts'], $default_lang);
                 }
 
-                if ( ! empty( $untranslated['terms'] ) ) {
-                    $terms = count( $untranslated['terms'] );
-                    $this->pll->model->set_language_in_mass( 'term', $untranslated['terms'], $default_lang );
+                if (!empty($untranslated['terms'])) {
+                    $terms = count($untranslated['terms']);
+                    $this->pll->model->set_language_in_mass('term', $untranslated['terms'], $default_lang);
                 }
             }
 
-            $this->cli->success( sprintf( 'Assigned %d posts and %d terms to the default language %s.', $posts, $terms, $default_lang ) );
+            $this->cli->success(
+                sprintf(
+                    'Assigned %d posts and %d terms to the default language %s.',
+                    $posts,
+                    $terms,
+                    $default_lang
+                )
+            );
         }
     }
 
@@ -134,9 +135,9 @@ class DoctorCommand extends BaseCommand {
      *
      *     wp pll doctor recount
      */
-    public function recount() {
-
-        $this->cli->command( array( 'term', 'recount', $this->taxonomy ) );
+    public function recount()
+    {
+        $this->cli->command(array('term', 'recount', $this->taxonomy));
     }
 
     /**
@@ -146,75 +147,103 @@ class DoctorCommand extends BaseCommand {
      *
      *     $ wp pll doctor language
      */
-    public function language( $args, $assoc_args ) {
-
-        $languages   = wp_list_pluck( $this->pll->model->get_languages_list(), 'locale', 'slug' );
-        $locales_pll = array_unique( array_values( $languages ) );
+    public function language($args, $assoc_args)
+    {
+        $languages = wp_list_pluck($this->pll->model->get_languages_list(), 'locale', 'slug');
+        $locales_pll = array_unique(array_values($languages));
 
         # see WP_CLI\CommandWithTranslation::get_all_languages()
-        $locales_core   = wp_get_installed_translations( 'core' );
-        $locales_core   = ! empty( $locales_core['default'] ) ? array_keys( $locales_core['default'] ) : array();
+        $locales_core = wp_get_installed_translations('core');
+        $locales_core = !empty($locales_core['default']) ? array_keys($locales_core['default']) : array();
         $locales_core[] = 'en_US';
 
-        $locales_orphan  = array_diff( $locales_core, $locales_pll );
-        $locales_missing = array_diff( $locales_pll, $locales_core );
+        $locales_orphan = array_diff($locales_core, $locales_pll);
+        $locales_missing = array_diff($locales_pll, $locales_core);
 
         # unset WP default locale
-        if ( ( $key = array_search( 'en_US', $locales_orphan ) ) !== false ) {
-            unset( $locales_orphan[$key] );
+        if (($key = array_search('en_US', $locales_orphan)) !== false) {
+            unset($locales_orphan[$key]);
         }
 
         # prune superfluous language files
-        if ( ! empty( $locales_orphan ) ) {
+        if (!empty($locales_orphan)) {
+            $this->cli->confirm(
+                sprintf(
+                    "%d superfluous core language packs were detected (%s).\nUninstall these language files?",
+                    count($locales_orphan),
+                    implode(
+                        ', ',
+                        $locales_orphan
+                    )
+                ),
+                $assoc_args
+            );
 
-            $this->cli->confirm( sprintf( "%d superfluous core language packs were detected (%s).\nUninstall these language files?", count( $locales_orphan ), implode( ', ', $locales_orphan ) ), $assoc_args );
-
-            foreach( $locales_orphan as $locale ) {
-
+            foreach ($locales_orphan as $locale) {
                 $this->cli->runcommand(
                     "language core uninstall $locale",
-                    array( 'return' => false, 'launch' => true, 'exit_error' => false )
+                    array('return' => false, 'launch' => true, 'exit_error' => false)
                 );
             }
         }
 
         # install missing language files
-        if ( ! empty( $locales_missing ) ) {
+        if (!empty($locales_missing)) {
+            $this->cli->confirm(
+                sprintf(
+                    "%d core language packs are missing (%s).\nInstall missing language files?",
+                    count($locales_missing),
+                    implode(
+                        ', ',
+                        $locales_missing
+                    )
+                ),
+                $assoc_args
+            );
 
-            $this->cli->confirm( sprintf( "%d core language packs are missing (%s).\nInstall missing language files?", count( $locales_missing ), implode( ', ', $locales_missing ) ), $assoc_args );
-
-            foreach( $locales_missing as $locale ) {
-
+            foreach ($locales_missing as $locale) {
                 $this->cli->runcommand(
                     "language core install $locale",
-                    array( 'return' => false, 'launch' => true, 'exit_error' => false )
+                    array('return' => false, 'launch' => true, 'exit_error' => false)
                 );
             }
         }
 
         # update outdated language files (core, themes and plugins)
-        $this->cli->log( 'Searching for updates...' );
+        $this->cli->log('Searching for updates...');
 
         ob_start();
 
-        $this->cli->command( array( 'language', 'core', 'list' ), array( 'field' => 'language', 'update' => 'available', 'format' => 'json' ) );
+        $this->cli->command(
+            array('language', 'core', 'list'),
+            array('field' => 'language', 'update' => 'available', 'format' => 'json')
+        );
 
         $locales_outdated = ob_get_clean();
 
-        $locales_outdated = json_decode( $locales_outdated );
+        $locales_outdated = json_decode($locales_outdated);
 
-        if ( ! empty( $locales_outdated ) ) {
-
-            $this->cli->confirm( sprintf( "%d core language packs have updates available (%s).\nUpdate outdated language files?", count( $locales_outdated ), implode( ', ', $locales_outdated ) ), $assoc_args );
+        if (!empty($locales_outdated)) {
+            $this->cli->confirm(
+                sprintf(
+                    "%d core language packs have updates available (%s).\nUpdate outdated language files?",
+                    count($locales_outdated),
+                    implode(
+                        ', ',
+                        $locales_outdated
+                    )
+                ),
+                $assoc_args
+            );
 
             $this->cli->runcommand(
                 "language core update",
-                array( 'return' => false, 'launch' => true, 'exit_error' => false )
+                array('return' => false, 'launch' => true, 'exit_error' => false)
             );
         }
 
         # done
-        $this->cli->log( 'All done.' );
+        $this->cli->log('All done.');
     }
 
     /**
@@ -224,14 +253,13 @@ class DoctorCommand extends BaseCommand {
      *
      *     wp pll doctor api
      */
-    public function api () {
-
+    public function api()
+    {
         $raw = \Polylang_CLI\Api\Api::functions_raw();
         $ref = \Polylang_CLI\Api\Api::functions_xref();
 
-        return ( $raw == $ref ) ? $this->cli->success( 'There are no Polylang API changes.' ) : $this->cli->warning( 'Polylang API changes detected.' );
+        return ($raw == $ref)
+            ? $this->cli->success('There are no Polylang API changes.')
+            : $this->cli->warning('Polylang API changes detected.');
     }
-
-}
-
 }

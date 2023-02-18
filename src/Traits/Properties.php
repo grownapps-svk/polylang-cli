@@ -2,20 +2,22 @@
 
 namespace Polylang_CLI\Traits;
 
-if ( ! trait_exists( 'Polylang_CLI\Traits\Properties' ) ) {
+if (trait_exists('Polylang_CLI\Traits\Properties')) {
+    return;
+}
 
-trait Properties {
-
+trait Properties
+{
     protected $cli = null;
     protected $pll = null;
     protected $api = null;
 
-    protected $taxonomy      = 'language';
+    protected $taxonomy = 'language';
     protected $taxonomy_term = 'term_language';
 
     protected $options_default = array();
-    protected $options_sync    = array();
-    protected $options_cpt     = array();
+    protected $options_sync = array();
+    protected $options_cpt = array();
 
     protected $fields_term = array(
         'term_id',
@@ -54,7 +56,4 @@ trait Properties {
         'filter',
         'flag_code',
     );
-
-}
-
 }

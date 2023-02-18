@@ -2,10 +2,12 @@
 
 namespace Polylang_CLI\Traits;
 
-if ( ! trait_exists( 'Polylang_CLI\Traits\SettingsErrors' ) ) {
+if (trait_exists('Polylang_CLI\Traits\SettingsErrors')) {
+    return;
+}
 
-trait SettingsErrors {
-
+trait SettingsErrors
+{
     /**
      * Gets WP settings errors.
      *
@@ -13,13 +15,13 @@ trait SettingsErrors {
      * @param  string $func WP_CLI method to run. Accepted values are `error` and `success`. Default: success.
      * @return array
      */
-    protected function get_settings_errors( $func = 'success' ) {
-
-        $func = ( $func == 'success' ) ? $func : 'error';
+    protected function get_settings_errors($func = 'success')
+    {
+        $func = ($func == 'success') ? $func : 'error';
 
         $settings_errors = array();
 
-        foreach ( \get_settings_errors( 'general' ) as $arr ) {
+        foreach (\get_settings_errors('general') as $arr) {
 
             $settings_errors[$func][] = $arr['message'];
         }
@@ -34,13 +36,13 @@ trait SettingsErrors {
      * @param  string $func WP_CLI method to run. Accepted values are `error` and `success`. Default: success.
      * @return void
      */
-    protected function settings_errors( $result = 'success' ) {
+    protected function settings_errors($result = 'success')
+    {
+        foreach ($this->get_settings_errors($result) as $func => $messages) {
 
-        foreach ( $this->get_settings_errors( $result ) as $func => $messages ) {
+            foreach ($messages as $message) {
 
-            foreach ( $messages as $message ) {
-
-                $this->cli->$func( $message );
+                $this->cli->$func($message);
             }
         }
     }
@@ -51,11 +53,8 @@ trait SettingsErrors {
      * @access protected
      * @return void
      */
-    protected function clear_settings_errors() {
-
+    protected function clear_settings_errors()
+    {
         $GLOBALS['wp_settings_errors'] = array();
     }
-
-}
-
 }
