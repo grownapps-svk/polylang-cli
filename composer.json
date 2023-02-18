@@ -1,14 +1,20 @@
 {
-    "name": "epfl-si/polylang-cli",
+    "name": "qvera/polylang-cli",
     "description": "CLI for the Polylang plugin",
     "type": "wp-cli-package",
-    "homepage": "https://github.com/epfl-si/polylang-cli",
+    "homepage": "https://github.com/qvera/polylang-cli",
     "license": "MIT",
     "authors": [
         {
             "name": "Peter J. Herrel",
             "email": "peterherrel@gmail.com",
             "homepage": "https://github.com/diggy",
+            "role": "Developer"
+        },
+        {
+            "name": "Maros Dovec",
+            "email": "dovec.maros1@gmail.com",
+            "homepage": "https://github.com/qvera",
             "role": "Developer"
         }
     ],
