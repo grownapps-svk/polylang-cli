@@ -2,8 +2,6 @@
 
 namespace Polylang_CLI\Traits;
 
-use Polylang_CLI\Api\PLL_Settings;
-
 if (trait_exists('Polylang_CLI\Traits\Cpt')) {
     return;
 }
@@ -19,7 +17,23 @@ trait Cpt
         $input = explode(',', $data);
 
         # invoke Polylang settings module
-        $settings = new PLL_Settings($this->pll);
+        $settings = new class($this->pll) extends \PLL_Settings_CPT
+        {
+            public function get_post_types()
+            {
+                return (array) $this->post_types;
+            }
+
+            public function get_taxonomies()
+            {
+                return (array) $this->taxonomies;
+            }
+
+            public function update($options)
+            {
+                return parent::update($options);
+            }
+        };
 
         $this->options_cpt = $settings;
 
@@ -32,7 +46,6 @@ trait Cpt
         # sanitize post types input
         $post_types = array_map('sanitize_key', explode(',', $data));
         $post_types = array_combine($post_types, array_fill(1, count($post_types), 1));
-        $post_types = array_intersect_key($post_types, $settings->get_post_types());
         $post_types = array_merge(
             array_combine(
                 $settings->options['post_types'],
@@ -48,7 +61,6 @@ trait Cpt
         # sanitize taxonomies input
         $taxonomies = array_map('sanitize_title', explode(',', $data));
         $taxonomies = array_combine($taxonomies, array_fill(1, count($taxonomies), 1));
-        $taxonomies = array_intersect_key($taxonomies, $settings->get_taxonomies());
         $taxonomies = array_merge(
             array_combine(
                 $settings->options['taxonomies'],
