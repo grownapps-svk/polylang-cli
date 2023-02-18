@@ -2,6 +2,8 @@
 
 namespace Polylang_CLI\Traits;
 
+use Polylang_CLI\Api\PLL_Settings;
+
 if (trait_exists('Polylang_CLI\Traits\Cpt')) {
     return;
 }
@@ -17,23 +19,7 @@ trait Cpt
         $input = explode(',', $data);
 
         # invoke Polylang settings module
-        $settings = new class($this->pll) extends \PLL_Settings_CPT
-        {
-            public function get_post_types()
-            {
-                return (array) $this->post_types;
-            }
-
-            public function get_taxonomies()
-            {
-                return (array) $this->taxonomies;
-            }
-
-            public function update($options)
-            {
-                return parent::update($options);
-            }
-        };
+        $settings = new PLL_Settings($this->pll);
 
         $this->options_cpt = $settings;
 
