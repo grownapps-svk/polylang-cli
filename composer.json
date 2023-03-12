@@ -1,8 +1,8 @@
 {
-    "name": "qvera/polylang-cli",
+    "name": "grownapps-svk/polylang-cli",
     "description": "CLI for the Polylang plugin",
     "type": "wp-cli-package",
-    "homepage": "https://github.com/qvera/polylang-cli",
+    "homepage": "https://github.com/grownapps-svk/polylang-cli",
     "license": "MIT",
     "authors": [
         {
